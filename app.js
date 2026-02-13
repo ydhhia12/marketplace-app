@@ -1,35 +1,55 @@
-import { db, auth } from "./firebase.js";
-import { ref, set, push, get, child, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-// ========================== LOGIN ==========================
-const loginBtn = document.getElementById("loginBtn");
-if (loginBtn) {
-  loginBtn.onclick = () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        window.location.href = "home.html";
-      })
-      .catch(err => alert(err.message));
-  };
-}
+import { db } from "./firebase.js";
+import { ref, push, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ========================== REGISTER ==========================
 const registerBtn = document.getElementById("registerBtn");
 if (registerBtn) {
   registerBtn.onclick = () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        alert("Registrasi berhasil!");
-        window.location.href = "index.html";
-      })
-      .catch(err => alert(err.message));
+    if (!email || !password) return alert("Email dan password wajib diisi!");
+
+    // generate user baru di database
+    const newUserRef = push(ref(db, "users/"));
+    set(newUserRef, {
+      email,
+      password, // catatan: plain text, untuk latihan aja
+      createdAt: Date.now()
+    }).then(() => {
+      alert("Registrasi berhasil! Silakan login.");
+      window.location.href = "index.html";
+    }).catch(err => alert("Gagal menyimpan data user: " + err.message));
+  };
+}
+
+// ========================== LOGIN ==========================
+const loginBtn = document.getElementById("loginBtn");
+if (loginBtn) {
+  loginBtn.onclick = () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) return alert("Email dan password wajib diisi!");
+
+    get(ref(db, "users/")).then(snapshot => {
+      const users = snapshot.val();
+      if (!users) return alert("User tidak ditemukan");
+
+      let loggedInUser = null;
+      Object.keys(users).forEach(key => {
+        if (users[key].email === email && users[key].password === password) {
+          loggedInUser = { uid: key, ...users[key] };
+        }
+      });
+
+      if (loggedInUser) {
+        localStorage.setItem("currentUser", JSON.stringify(loggedInUser));
+        window.location.href = "home.html";
+      } else {
+        alert("Email atau password salah");
+      }
+    });
   };
 }
 
@@ -37,9 +57,8 @@ if (registerBtn) {
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.onclick = () => {
-    signOut(auth).then(() => {
-      window.location.href = "index.html";
-    });
+    localStorage.removeItem("currentUser");
+    window.location.href = "index.html";
   };
 }
 
@@ -47,6 +66,9 @@ if (logoutBtn) {
 const uploadBtn = document.getElementById("uploadBtn");
 if (uploadBtn) {
   uploadBtn.onclick = () => {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (!currentUser) return alert("Login dulu ya!");
+
     const nama = document.getElementById("nama").value;
     const harga = document.getElementById("harga").value;
     const kategori = document.getElementById("kategori").value;
@@ -54,13 +76,9 @@ if (uploadBtn) {
     const wa = document.getElementById("wa").value;
     const deskripsi = document.getElementById("deskripsi").value;
 
-    const user = auth.currentUser;
-    if (!user) return alert("Login dulu ya!");
-
-    const productRef = ref(db, "products/");
-    const newProduct = push(productRef);
-    set(newProduct, {
-      uid: user.uid,
+    const productRef = push(ref(db, "products/"));
+    set(productRef, {
+      uid: currentUser.uid,
       nama,
       harga,
       kategori,
@@ -78,34 +96,30 @@ if (uploadBtn) {
 // ========================== DASHBOARD ==========================
 const dashboardList = document.getElementById("dashboardList");
 if (dashboardList) {
-  onAuthStateChanged(auth, user => {
-    if (!user) {
-      window.location.href = "index.html";
-      return;
-    }
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser) window.location.href = "index.html";
 
-    const productRef = ref(db, "products/");
-    onValue(productRef, snapshot => {
-      const data = snapshot.val();
-      dashboardList.innerHTML = "";
-      if (data) {
-        Object.keys(data).forEach(key => {
-          if (data[key].uid === user.uid) {
-            dashboardList.innerHTML += `
-              <div class="productCard">
-                <h4>${data[key].nama}</h4>
-                <p>Rp ${data[key].harga}</p>
-                <button onclick="window.location.href='edit.html?id=${key}'">Edit</button>
-                <button onclick="deleteProduct('${key}')">Hapus</button>
-                <button onclick="window.location.href='detail.html?id=${key}'">Detail</button>
-              </div>
-            `;
-          }
-        });
-      } else {
-        dashboardList.innerHTML = "<p>Belum ada produk</p>";
-      }
-    });
+  const productRef = ref(db, "products/");
+  onValue(productRef, snapshot => {
+    const data = snapshot.val();
+    dashboardList.innerHTML = "";
+    if (data) {
+      Object.keys(data).forEach(key => {
+        if (data[key].uid === currentUser.uid) {
+          dashboardList.innerHTML += `
+            <div class="productCard">
+              <h4>${data[key].nama}</h4>
+              <p>Rp ${data[key].harga}</p>
+              <button onclick="window.location.href='edit.html?id=${key}'">Edit</button>
+              <button onclick="deleteProduct('${key}')">Hapus</button>
+              <button onclick="window.location.href='detail.html?id=${key}'">Detail</button>
+            </div>
+          `;
+        }
+      });
+    } else {
+      dashboardList.innerHTML = "<p>Belum ada produk</p>";
+    }
   });
 }
 
@@ -126,7 +140,7 @@ if (productList) {
     const data = snapshot.val();
     productList.innerHTML = "";
     if (data) {
-      Object.keys(data).reverse().forEach(key => { // terbaru dulu
+      Object.keys(data).reverse().forEach(key => {
         const item = data[key];
         productList.innerHTML += `
           <div class="productCard">
