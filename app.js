@@ -41,13 +41,22 @@ if (registerBtn) {
     if (!email || !password) return alert("Isi email & password!");
 
     createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
+      .then((userCredential) => {
+        const user = userCredential.user;
+        // push data ke Realtime Database
+        push(ref(db, "users"), {
+          uid: user.uid,
+          email: user.email,
+          createdAt: Date.now()
+        });
+
         alert("Akun berhasil dibuat!");
         window.location.href = "index.html";
       })
       .catch(err => alert(err.message));
   };
 }
+
 
 // =======================
 // LOGOUT
