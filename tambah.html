@@ -7,33 +7,32 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-  <div class="card">
-    <h1>Tambah Barang</h1>
+  <div class="container">
+    <div class="card">
+      <h1>Tambah Barang</h1>
 
-    <input id="nama" placeholder="Nama barang">
-    <input id="harga" type="number" placeholder="Harga">
-    
-    <select id="kategori">
-      <option value="Baju">Baju</option>
-      <option value="Makanan">Makanan</option>
-      <option value="Buku">Buku</option>
-      <option value="Aksesoris">Aksesoris</option>
-      <option value="Lainnya">Lainnya</option>
-    </select>
+      <input id="nama" placeholder="Nama Barang" />
+      <input id="harga" type="number" placeholder="Harga" />
 
-    <!-- Upload foto langsung -->
-    <input type="file" id="gambarFile" accept="image/*">
+      <select id="kategori">
+        <option value="Baju">Baju</option>
+        <option value="Makanan">Makanan</option>
+        <option value="Buku">Buku</option>
+        <option value="Aksesoris">Aksesoris</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
 
-    <input type="text" id="wa" placeholder="Nomor WhatsApp (contoh: 6281234567890)">
-    <textarea id="deskripsi" placeholder="Deskripsi barang"></textarea>
+      <input type="file" id="gambarFile" accept="image/*" />
+      <img id="previewImg" alt="Preview Gambar" />
 
-    <button id="uploadBtn">Upload Barang</button>
-    <button onclick="window.location.href='dashboard.html'">Kembali</button>
+      <input id="wa" type="text" placeholder="Nomor WhatsApp (contoh: 6281234567890)" />
+      <textarea id="deskripsi" placeholder="Deskripsi Barang"></textarea>
 
+      <button id="uploadBtn">Upload Barang</button>
+      <button onclick="window.location.href='home.html'">Kembali</button>
+    </div>
   </div>
-</div>
 
-<script type="module" src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

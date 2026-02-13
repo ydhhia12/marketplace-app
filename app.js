@@ -50,18 +50,37 @@ if (logoutBtn) {
 
 // ========================== UPLOAD PRODUK ==========================
 const uploadBtn = document.getElementById("uploadBtn");
+const fileInput = document.getElementById("gambarFile");
+const previewImg = document.getElementById("previewImg");
+
+// Preview gambar
+if (fileInput && previewImg) {
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (file) {
+      previewImg.src = URL.createObjectURL(file);
+      previewImg.style.display = "block";
+    } else {
+      previewImg.style.display = "none";
+    }
+  });
+}
 
 if (uploadBtn) {
   uploadBtn.onclick = async () => {
     const nama = document.getElementById("nama").value.trim();
     const harga = document.getElementById("harga").value.trim();
     const kategori = document.getElementById("kategori").value;
-    const file = document.getElementById("gambarFile").files[0];
+    const file = fileInput.files[0];
     const wa = document.getElementById("wa").value.trim();
     const deskripsi = document.getElementById("deskripsi").value.trim();
 
     if (!nama || !harga) return alert("Nama dan harga wajib diisi!");
     if (!file) return alert("Silakan pilih foto produk!");
+    if (wa && !/^\d+$/.test(wa)) return alert("Nomor WA hanya boleh angka!");
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "Sedang upload...";
 
     try {
       const storage = getStorage();
@@ -71,7 +90,7 @@ if (uploadBtn) {
 
       const productRef = push(ref(db, "products/"));
       await set(productRef, {
-        uid: "guest", // tanpa login
+        uid: "guest",
         nama,
         harga,
         kategori,
@@ -82,10 +101,13 @@ if (uploadBtn) {
       });
 
       alert("Produk berhasil ditambahkan!");
-      window.location.href = "dashboard.html";
+      window.location.href = "home.html";
     } catch (err) {
       alert("Gagal upload produk: " + err.message);
       console.error(err);
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Upload Barang";
     }
   };
 }
@@ -187,7 +209,7 @@ if (saveEdit) {
     document.getElementById("kategori").value = data.kategori;
     document.getElementById("wa").value = data.wa;
     document.getElementById("deskripsi").value = data.deskripsi;
-    document.getElementById("oldGambar").value = data.gambar; // simpan URL lama
+    document.getElementById("oldGambar").value = data.gambar;
   });
 
   saveEdit.onclick = async () => {
