@@ -4,6 +4,9 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, on
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ========================== REGISTER ==========================
+import { auth } from "./firebase.js";
+import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 const registerBtn = document.getElementById("registerBtn");
 if (registerBtn) {
   registerBtn.onclick = () => {
@@ -23,6 +26,9 @@ if (registerBtn) {
 }
 
 // ========================== LOGIN ==========================
+import { auth } from "./firebase.js";
+import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 const loginBtn = document.getElementById("loginBtn");
 if (loginBtn) {
   loginBtn.onclick = () => {
