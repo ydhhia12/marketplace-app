@@ -3,18 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Tambah Barang</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div class="container">
   <div class="card">
     <h1>Tambah Barang</h1>
 
     <input id="nama" placeholder="Nama barang">
-    
     <input id="harga" type="number" placeholder="Harga">
     
     <select id="kategori">
@@ -25,16 +22,15 @@
       <option value="Lainnya">Lainnya</option>
     </select>
 
-    <input type="text" id="gambar" placeholder="Link gambar produk (URL)">
-    
-    <!-- TAMBAHAN NOMOR WA -->
-    <input type="text" id="wa" placeholder="Nomor WhatsApp (contoh: 6281234567890)">
+    <!-- Upload foto langsung -->
+    <input type="file" id="gambarFile" accept="image/*">
 
+    <input type="text" id="wa" placeholder="Nomor WhatsApp (contoh: 6281234567890)">
     <textarea id="deskripsi" placeholder="Deskripsi barang"></textarea>
 
     <button id="uploadBtn">Upload Barang</button>
-    
     <button onclick="window.location.href='dashboard.html'">Kembali</button>
+
   </div>
 </div>
 
