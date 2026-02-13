@@ -1,37 +1,8 @@
-import { auth, db } from "./firebase.js";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
-  ref,
-  push,
-  onValue,
-  get,
-  remove,
-  update
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db } from "./firebase.js";
+import { ref, push, get, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // =======================
-// LOGIN
-// =======================
-const loginBtn = document.getElementById("loginBtn");
-if (loginBtn) {
-  loginBtn.onclick = () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    if (!email || !password) return alert("Isi email & password!");
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => window.location.href = "home.html")
-      .catch(err => alert(err.message));
-  };
-}
-
-// =======================
-// REGISTER
+// REGISTER (REALTIMEDB)
 // =======================
 const registerBtn = document.getElementById("registerBtn");
 if (registerBtn) {
@@ -40,45 +11,82 @@ if (registerBtn) {
     const password = document.getElementById("password").value.trim();
     if (!email || !password) return alert("Isi email & password!");
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        // push data ke Realtime Database
-        push(ref(db, "users"), {
-          uid: user.uid,
-          email: user.email,
-          createdAt: Date.now()
-        });
+    const usersRef = ref(db, "users");
+    get(usersRef).then(snapshot => {
+      let exists = false;
 
+      snapshot.forEach(child => {
+        if (child.val().email === email) exists = true;
+      });
+
+      if (exists) {
+        alert("Email sudah terdaftar!");
+        return;
+      }
+
+      push(usersRef, {
+        email,
+        password, // plain text, bisa nanti di-hash
+        createdAt: Date.now()
+      }).then(() => {
         alert("Akun berhasil dibuat!");
-        window.location.href = "index.html";
-      })
-      .catch(err => alert(err.message));
+        window.location.href = "index.html"; // ke login
+      });
+    });
   };
 }
 
+// =======================
+// LOGIN (REALTIMEDB)
+// =======================
+const loginBtn = document.getElementById("loginBtn");
+if (loginBtn) {
+  loginBtn.onclick = () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    if (!email || !password) return alert("Isi email & password!");
+
+    const usersRef = ref(db, "users");
+    get(usersRef).then(snapshot => {
+      let foundUser = null;
+
+      snapshot.forEach(child => {
+        const data = child.val();
+        if (data.email === email && data.password === password) {
+          foundUser = { ...data, key: child.key };
+        }
+      });
+
+      if (foundUser) {
+        // Simpan user di localStorage biar tetap login
+        localStorage.setItem("currentUser", JSON.stringify(foundUser));
+        alert("Login berhasil!");
+        window.location.href = "home.html";
+      } else {
+        alert("Email atau password salah!");
+      }
+    });
+  };
+}
+
+// =======================
+// CEK LOGIN
+// =======================
+function getCurrentUser() {
+  const user = localStorage.getItem("currentUser");
+  return user ? JSON.parse(user) : null;
+}
 
 // =======================
 // LOGOUT
 // =======================
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
-  logoutBtn.onclick = () => signOut(auth).then(() => window.location.href = "index.html");
+  logoutBtn.onclick = () => {
+    localStorage.removeItem("currentUser");
+    window.location.href = "index.html";
+  };
 }
-
-// =======================
-// CEK LOGIN
-// =======================
-onAuthStateChanged(auth, (user) => {
-  const path = window.location.pathname;
-  if (path.includes("home.html") || path.includes("dashboard.html") || path.includes("tambah.html")) {
-    if (!user) window.location.href = "index.html";
-    else {
-      loadProducts();
-      loadUserProducts();
-    }
-  }
-});
 
 // =======================
 // FORMAT RUPIAH
@@ -93,7 +101,7 @@ function formatRupiah(angka) {
 const uploadBtn = document.getElementById("uploadBtn");
 if (uploadBtn) {
   uploadBtn.onclick = () => {
-    const user = auth.currentUser;
+    const user = getCurrentUser();
     if (!user) return alert("Kamu harus login dulu!");
 
     const nama = document.getElementById("nama").value.trim();
@@ -110,14 +118,14 @@ if (uploadBtn) {
         .then(() => { alert("Produk berhasil diupdate!"); window.location.href = "dashboard.html"; })
         .catch(err => alert(err.message));
     } else {
-      push(ref(db, "products"), { nama, harga, kategori, deskripsi, gambar: gambar || "", uid: user.uid, createdAt: Date.now() })
+      push(ref(db, "products"), { nama, harga, kategori, deskripsi, gambar: gambar || "", uid: user.key, createdAt: Date.now() })
         .then(() => { alert("Barang berhasil diupload!"); window.location.href = "dashboard.html"; });
     }
   };
 }
 
 // =======================
-// TAMPILKAN SEMUA PRODUK (HOME)
+// TAMPILKAN PRODUK (HOME & DASHBOARD)
 // =======================
 function loadProducts() {
   const productList = document.getElementById("productList");
@@ -134,23 +142,18 @@ function loadProducts() {
           <img src="${data.gambar || 'https://via.placeholder.com/150'}" width="120">
           <h3>${data.nama}</h3>
           <p>💰 Rp ${formatRupiah(data.harga)}</p>
-          <a href="detail.html?id=${child.key}">
-            <button>Lihat Detail</button>
-          </a>
+          <a href="detail.html?id=${child.key}"><button>Lihat Detail</button></a>
         </div>
       `;
     });
   });
 }
 
-// =======================
-// DASHBOARD: PRODUK USER
-// =======================
 function loadUserProducts() {
   const dashboardList = document.getElementById("dashboardList");
   if (!dashboardList) return;
 
-  const user = auth.currentUser;
+  const user = getCurrentUser();
   if (!user) return;
 
   onValue(ref(db, "products"), snapshot => {
@@ -160,7 +163,7 @@ function loadUserProducts() {
     let found = false;
     snapshot.forEach(child => {
       const data = child.val();
-      if (data.uid === user.uid) {
+      if (data.uid === user.key) {
         found = true;
         dashboardList.innerHTML += `
           <div class="product-card">
@@ -181,34 +184,31 @@ function loadUserProducts() {
 }
 
 // =======================
-// DELETE PRODUK
+// DELETE & EDIT PRODUK
 // =======================
 window.deleteProduct = id => {
   if (!confirm("Yakin ingin hapus produk?")) return;
-  const user = auth.currentUser;
+
+  const user = getCurrentUser();
   if (!user) return;
 
   get(ref(db, "products/" + id)).then(snapshot => {
     const data = snapshot.val();
-    if (data && data.uid === user.uid) remove(ref(db, "products/" + id)).then(() => alert("Produk berhasil dihapus!"));
+    if (data && data.uid === user.key) remove(ref(db, "products/" + id)).then(() => alert("Produk berhasil dihapus!"));
     else alert("Kamu tidak bisa menghapus produk ini!");
   });
-}
+};
 
-// =======================
-// EDIT PRODUK (ke form tambah.html)
-// =======================
 window.editProduct = id => {
-  const user = auth.currentUser;
+  const user = getCurrentUser();
   if (!user) return;
 
   get(ref(db, "products/" + id)).then(snapshot => {
     const data = snapshot.val();
-    if (!data || data.uid !== user.uid) return alert("Kamu tidak bisa edit produk ini!");
-
+    if (!data || data.uid !== user.key) return alert("Kamu tidak bisa edit produk ini!");
     window.location.href = `tambah.html?editId=${id}`;
   });
-}
+};
 
 // =======================
 // DETAIL PRODUK
@@ -229,9 +229,7 @@ if (detailDiv) {
       <h2>${data.nama}</h2>
       <h3>Rp ${formatRupiah(data.harga)}</h3>
       <p>${data.deskripsi || ""}</p>
-      <a href="https://wa.me/62XXXXXXXXXX?text=${pesanWA}" target="_blank">
-        <button>BELI SEKARANG</button>
-      </a>
+      <a href="https://wa.me/62XXXXXXXXXX?text=${pesanWA}" target="_blank"><button>BELI SEKARANG</button></a>
     `;
   });
 }
