@@ -8,22 +8,20 @@ import { auth } from "./firebase.js";
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const registerBtn = document.getElementById("registerBtn");
-if (registerBtn) {
-  registerBtn.onclick = () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+registerBtn.onclick = () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-    if (!email || !password) return alert("Email dan password wajib diisi!");
-    if (password.length < 6) return alert("Password minimal 6 karakter!");
+  if (!email || !password) return alert("Email dan password wajib diisi!");
+  if (password.length < 6) return alert("Password minimal 6 karakter!");
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(userCredential => {
-        alert("Registrasi berhasil! Silakan login.");
-        window.location.href = "index.html";
-      })
-      .catch(err => alert("Gagal registrasi: " + err.message));
-  };
-}
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      alert("Registrasi berhasil! Silakan login.");
+      window.location.href = "index.html";
+    })
+    .catch(err => alert("Gagal registrasi: " + err.message));
+};
 
 // ========================== LOGIN ==========================
 import { auth } from "./firebase.js";
