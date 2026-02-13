@@ -1,8 +1,8 @@
-// Import Firebase
+// firebase.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAAgHWf3VJNMrdZda_H15D_b90GsD-zuaw",
   authDomain: "neechat-6f32d.firebaseapp.com",
@@ -14,8 +14,6 @@ const firebaseConfig = {
   measurementId: "G-6JTXZJRPY3"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Export Realtime Database
+export const auth = getAuth(app);
 export const db = getDatabase(app);
