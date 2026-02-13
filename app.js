@@ -49,93 +49,70 @@ if (logoutBtn) {
 }
 
 // ========================== UPLOAD PRODUK ==========================
-// ========================== UPLOAD PRODUK ==========================
 const uploadBtn = document.getElementById("uploadBtn");
 
-let currentUser = null;
+if (uploadBtn) {
+  uploadBtn.onclick = async () => {
+    const nama = document.getElementById("nama").value.trim();
+    const harga = document.getElementById("harga").value.trim();
+    const kategori = document.getElementById("kategori").value;
+    const file = document.getElementById("gambarFile").files[0];
+    const wa = document.getElementById("wa").value.trim();
+    const deskripsi = document.getElementById("deskripsi").value.trim();
 
-// Pastikan user login sebelum bisa upload
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    alert("Login dulu ya!");
-    window.location.href = "index.html";
-    return;
-  }
-  currentUser = user;
-});
+    if (!nama || !harga) return alert("Nama dan harga wajib diisi!");
+    if (!file) return alert("Silakan pilih foto produk!");
 
-uploadBtn.onclick = async () => {
-  if (!currentUser) return alert("Login dulu ya!");
+    try {
+      const storage = getStorage();
+      const imgRef = storageRef(storage, `produk/${Date.now()}_${file.name}`);
+      await uploadBytes(imgRef, file);
+      const imgURL = await getDownloadURL(imgRef);
 
-  const nama = document.getElementById("nama").value.trim();
-  const harga = document.getElementById("harga").value.trim();
-  const kategori = document.getElementById("kategori").value;
-  const file = document.getElementById("gambarFile").files[0];
-  const wa = document.getElementById("wa").value.trim();
-  const deskripsi = document.getElementById("deskripsi").value.trim();
+      const productRef = push(ref(db, "products/"));
+      await set(productRef, {
+        uid: "guest", // tanpa login
+        nama,
+        harga,
+        kategori,
+        gambar: imgURL,
+        wa,
+        deskripsi,
+        createdAt: Date.now()
+      });
 
-  if (!nama || !harga) return alert("Nama dan harga wajib diisi!");
-  if (!file) return alert("Silakan pilih foto produk!");
-
-  try {
-    // Upload ke Firebase Storage
-    const storage = getStorage();
-    const imgRef = storageRef(storage, `produk/${Date.now()}_${file.name}`);
-    await uploadBytes(imgRef, file);
-    const imgURL = await getDownloadURL(imgRef);
-
-    // Simpan ke Realtime Database
-    const productRef = push(ref(db, "products/"));
-    await set(productRef, {
-      uid: currentUser.uid,
-      nama,
-      harga,
-      kategori,
-      gambar: imgURL,
-      wa,
-      deskripsi,
-      createdAt: Date.now()
-    });
-
-    alert("Produk berhasil ditambahkan!");
-    window.location.href = "dashboard.html";
-  } catch (err) {
-    alert("Gagal upload produk: " + err.message);
-    console.error(err);
-  }
-};
+      alert("Produk berhasil ditambahkan!");
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      alert("Gagal upload produk: " + err.message);
+      console.error(err);
+    }
+  };
+}
 
 // ========================== DASHBOARD ==========================
 const dashboardList = document.getElementById("dashboardList");
 if (dashboardList) {
-  onAuthStateChanged(auth, user => {
-    if (!user) {
-      window.location.href = "index.html";
+  const productRef = ref(db, "products/");
+  onValue(productRef, snapshot => {
+    const data = snapshot.val() || {};
+    dashboardList.innerHTML = "";
+    if (Object.keys(data).length === 0) {
+      dashboardList.innerHTML = "<p>Belum ada produk</p>";
       return;
     }
-
-    const productRef = ref(db, "products/");
-    onValue(productRef, snapshot => {
-      const data = snapshot.val();
-      dashboardList.innerHTML = "";
-      if (data) {
-        Object.keys(data).forEach(key => {
-          if (data[key].uid === user.uid) {
-            dashboardList.innerHTML += `
-              <div class="productCard">
-                <img src="${data[key].gambar}" alt="${data[key].nama}" class="productImg"/>
-                <h4>${data[key].nama}</h4>
-                <p>Rp ${data[key].harga}</p>
-                <button onclick="window.location.href='edit.html?id=${key}'">Edit</button>
-                <button onclick="deleteProduct('${key}')">Hapus</button>
-                <button onclick="window.location.href='detail.html?id=${key}'">Detail</button>
-              </div>
-            `;
-          }
-        });
-      } else {
-        dashboardList.innerHTML = "<p>Belum ada produk</p>";
-      }
+    Object.keys(data).reverse().forEach(key => {
+      const item = data[key];
+      dashboardList.innerHTML += `
+        <div class="productCard">
+          <img src="${item.gambar}" alt="${item.nama}" class="productImg"/>
+          <h4>${item.nama}</h4>
+          <p>Rp ${item.harga}</p>
+          <button onclick="window.location.href='edit.html?id=${key}'">Edit</button>
+          <button onclick="deleteProduct('${key}')">Hapus</button>
+          <button onclick="window.location.href='detail.html?id=${key}'">Detail</button>
+        </div>
+      `;
     });
   });
 }
