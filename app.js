@@ -14,12 +14,12 @@ if (registerBtn) {
     const newUserRef = push(ref(db, "users/"));
     set(newUserRef, {
       email,
-      password, // catatan: plain text, untuk latihan aja
+      password, // plain-text untuk latihan
       createdAt: Date.now()
     }).then(() => {
       alert("Registrasi berhasil! Silakan login.");
       window.location.href = "index.html";
-    }).catch(err => alert("Gagal menyimpan data user: " + err.message));
+    }).catch(err => alert("Gagal simpan data user: " + err.message));
   };
 }
 
@@ -63,26 +63,28 @@ if (logoutBtn) {
 }
 
 // ========================== ADD PRODUCT ==========================
-// ========================== ADD PRODUCT ==========================
 const uploadBtn = document.getElementById("uploadBtn");
 if (uploadBtn) {
   uploadBtn.onclick = () => {
-    // ambil user dari localStorage
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (!currentUser) return alert("Login dulu ya!");
+    if (!currentUser) {
+      alert("Login dulu ya!");
+      window.location.href = "index.html";
+      return;
+    }
 
-    const nama = document.getElementById("nama").value;
-    const harga = document.getElementById("harga").value;
+    const nama = document.getElementById("nama").value.trim();
+    const harga = document.getElementById("harga").value.trim();
     const kategori = document.getElementById("kategori").value;
-    const gambar = document.getElementById("gambar").value;
-    const wa = document.getElementById("wa").value;
-    const deskripsi = document.getElementById("deskripsi").value;
+    const gambar = document.getElementById("gambar").value.trim();
+    const wa = document.getElementById("wa").value.trim();
+    const deskripsi = document.getElementById("deskripsi").value.trim();
 
     if (!nama || !harga) return alert("Nama dan harga wajib diisi!");
 
     const productRef = push(ref(db, "products/"));
     set(productRef, {
-      uid: currentUser.uid, // uid dari localStorage
+      uid: currentUser.uid,
       nama,
       harga,
       kategori,
@@ -90,15 +92,12 @@ if (uploadBtn) {
       wa,
       deskripsi,
       createdAt: Date.now()
-    })
-    .then(() => {
+    }).then(() => {
       alert("Produk berhasil ditambahkan!");
       window.location.href = "dashboard.html";
-    })
-    .catch(err => alert("Gagal upload produk: " + err.message));
+    }).catch(err => alert("Gagal upload produk: " + err.message));
   };
 }
-
 
 // ========================== DASHBOARD ==========================
 const dashboardList = document.getElementById("dashboardList");
