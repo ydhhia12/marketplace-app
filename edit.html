@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Barang</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>Edit Barang</h1>
+
+    <input id="nama">
+    <input id="harga" type="number">
+    
+    <select id="kategori">
+      <option value="Baju">Baju</option>
+      <option value="Makanan">Makanan</option>
+      <option value="Buku">Buku</option>
+      <option value="Aksesoris">Aksesoris</option>
+      <option value="Lainnya">Lainnya</option>
+    </select>
+
+    <input id="gambar">
+    <input id="wa">
+    <textarea id="deskripsi"></textarea>
+
+    <button id="saveEdit">Simpan Perubahan</button>
+  </div>
+</div>
+
+<script type="module">
+import { db } from "./firebase.js";
+import { ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+const productRef = ref(db, "products/" + id);
+
+get(productRef).then(snapshot => {
+  const data = snapshot.val();
+
+  nama.value = data.nama;
+  harga.value = data.harga;
+  kategori.value = data.kategori;
+  gambar.value = data.gambar;
+  wa.value = data.wa;
+  deskripsi.value = data.deskripsi;
+});
+
+saveEdit.onclick = () => {
+  update(productRef, {
+    nama: nama.value,
+    harga: harga.value,
+    kategori: kategori.value,
+    gambar: gambar.value,
+    wa: wa.value,
+    deskripsi: deskripsi.value
+  });
+
+  alert("Produk berhasil diupdate!");
+  window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>

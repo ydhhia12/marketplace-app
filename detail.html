@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Detail Produk</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <div class="card" id="detailBox">
+      <h2>Loading...</h2>
+    </div>
+
+    <br>
+    <a href="home.html">← Kembali</a>
+  </div>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import { ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Ambil ID dari URL
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    const detailBox = document.getElementById("detailBox");
+
+    if (!id) {
+      detailBox.innerHTML = "<h2>Produk tidak ditemukan</h2>";
+    } else {
+      const productRef = ref(db, "products/" + id);
+
+      get(productRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+
+          // nomor WA default kalau penjual tidak isi
+          const waNumber = data.wa || "6281234567890";
+
+          // pesan otomatis
+          const pesan = encodeURIComponent(
+            `Halo, saya tertarik dengan produk:\n\n${data.nama}\nHarga: Rp ${data.harga}`
+          );
+
+          detailBox.innerHTML = `
+            <h2>${data.nama}</h2>
+            
+            <img src="${data.gambar || 'https://via.placeholder.com/200'}"
+                 style="width:200px;border-radius:10px;margin:10px 0">
+
+            <p><b>Harga:</b> Rp ${data.harga}</p>
+            <p><b>Kategori:</b> ${data.kategori || "-"}</p>
+            
+            <p><b>Deskripsi:</b></p>
+            <p>${data.deskripsi || "Tidak ada deskripsi"}</p>
+
+            <br>
+
+            <a href="https://wa.me/${waNumber}?text=${pesan}" target="_blank">
+              <button style="
+                background:#25D366;
+                color:white;
+                padding:12px 20px;
+                border:none;
+                border-radius:8px;
+                font-size:16px;
+                cursor:pointer;
+              ">
+                🛒 BELI SEKARANG
+              </button>
+            </a>
+          `;
+        } else {
+          detailBox.innerHTML = "<h2>Produk tidak ada</h2>";
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

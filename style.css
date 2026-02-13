@@ -1,0 +1,96 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #1a1a2e, #6a0572, #ff79c6); /* navy + lilac + pink */
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.container {
+  width: 100%;
+  max-width: 500px;
+  padding: 20px;
+}
+
+.card {
+  background: #2c003e; /* dark lilac / navy gelap */
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(255, 182, 193, 0.6); /* pink shadow */
+}
+
+h1 {
+  text-align: center;
+  color: #ffda00; /* kuning cerah */
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: none;
+  background: #3b003f; /* hitam-lilac */
+  color: #fff;
+}
+
+textarea {
+  resize: none;
+  height: 80px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #ff69b4; /* pink */
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #d580ff; /* lilac cerah */
+}
+
+a {
+  color: #ffe600; /* kuning */
+  text-decoration: none;
+}
+
+#productList div {
+  background: #3a0d4b; /* dark lilac/navy */
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+}
+
+.product-card {
+  background: #2e003e; /* hitam-lilac */
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.product-card button {
+  background: #ffda00; /* kuning */
+  border: none;
+  padding: 8px 12px;
+  color: #2c003e; /* hitam-lilac untuk kontras */
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.product-card button:hover {
+  background: #ff79c6; /* pink saat hover */
+  color: #fff;
+}
