@@ -63,9 +63,11 @@ if (logoutBtn) {
 }
 
 // ========================== ADD PRODUCT ==========================
+// ========================== ADD PRODUCT ==========================
 const uploadBtn = document.getElementById("uploadBtn");
 if (uploadBtn) {
   uploadBtn.onclick = () => {
+    // ambil user dari localStorage
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
     if (!currentUser) return alert("Login dulu ya!");
 
@@ -76,9 +78,11 @@ if (uploadBtn) {
     const wa = document.getElementById("wa").value;
     const deskripsi = document.getElementById("deskripsi").value;
 
+    if (!nama || !harga) return alert("Nama dan harga wajib diisi!");
+
     const productRef = push(ref(db, "products/"));
     set(productRef, {
-      uid: currentUser.uid,
+      uid: currentUser.uid, // uid dari localStorage
       nama,
       harga,
       kategori,
@@ -86,12 +90,15 @@ if (uploadBtn) {
       wa,
       deskripsi,
       createdAt: Date.now()
-    }).then(() => {
+    })
+    .then(() => {
       alert("Produk berhasil ditambahkan!");
       window.location.href = "dashboard.html";
-    });
+    })
+    .catch(err => alert("Gagal upload produk: " + err.message));
   };
 }
+
 
 // ========================== DASHBOARD ==========================
 const dashboardList = document.getElementById("dashboardList");
