@@ -4,6 +4,9 @@ import { ref, push, get, onValue, remove, update } from "https://www.gstatic.com
 // =======================
 // REGISTER (REALTIMEDB)
 // =======================
+// =======================
+// REGISTER (REALTIMEDB & AUTO LOGIN)
+// =======================
 const registerBtn = document.getElementById("registerBtn");
 if (registerBtn) {
   registerBtn.onclick = () => {
@@ -24,13 +27,20 @@ if (registerBtn) {
         return;
       }
 
+      // Push data ke Realtime Database
       push(usersRef, {
         email,
-        password, // plain text, bisa nanti di-hash
+        password, // plain text (bisa nanti di-hash)
         createdAt: Date.now()
-      }).then(() => {
-        alert("Akun berhasil dibuat!");
-        window.location.href = "index.html"; // ke login
+      }).then(newUserRef => {
+        // Ambil data user baru
+        get(newUserRef).then(userSnap => {
+          const user = { ...userSnap.val(), key: newUserRef.key };
+          // Simpan user ke localStorage => otomatis login
+          localStorage.setItem("currentUser", JSON.stringify(user));
+          alert("Akun berhasil dibuat! Langsung login...");
+          window.location.href = "home.html"; // langsung ke home
+        });
       });
     });
   };
