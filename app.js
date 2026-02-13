@@ -1,5 +1,6 @@
-import { db } from "./firebase.js";
-import { ref, push, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { db, auth } from "./firebase.js";
+import { ref, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ========================== REGISTER ==========================
 const registerBtn = document.getElementById("registerBtn");
@@ -10,16 +11,12 @@ if (registerBtn) {
 
     if (!email || !password) return alert("Email dan password wajib diisi!");
 
-    // generate user baru di database
-    const newUserRef = push(ref(db, "users/"));
-    set(newUserRef, {
-      email,
-      password, // plain-text untuk latihan
-      createdAt: Date.now()
-    }).then(() => {
-      alert("Registrasi berhasil! Silakan login.");
-      window.location.href = "index.html";
-    }).catch(err => alert("Gagal simpan data user: " + err.message));
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(userCredential => {
+        alert("Registrasi berhasil! Silakan login.");
+        window.location.href = "index.html";
+      })
+      .catch(err => alert(err.message));
   };
 }
 
@@ -30,26 +27,16 @@ if (loginBtn) {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    if (!email || !password) return alert("Email dan password wajib diisi!");
-
-    get(ref(db, "users/")).then(snapshot => {
-      const users = snapshot.val();
-      if (!users) return alert("User tidak ditemukan");
-
-      let loggedInUser = null;
-      Object.keys(users).forEach(key => {
-        if (users[key].email === email && users[key].password === password) {
-          loggedInUser = { uid: key, ...users[key] };
-        }
-      });
-
-      if (loggedInUser) {
-        localStorage.setItem("currentUser", JSON.stringify(loggedInUser));
+    signInWithEmailAndPassword(auth, email, password)
+      .then(userCredential => {
+        // simpan info user ke localStorage
+        localStorage.setItem("currentUser", JSON.stringify({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email
+        }));
         window.location.href = "home.html";
-      } else {
-        alert("Email atau password salah");
-      }
-    });
+      })
+      .catch(err => alert(err.message));
   };
 }
 
@@ -57,8 +44,10 @@ if (loginBtn) {
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.onclick = () => {
-    localStorage.removeItem("currentUser");
-    window.location.href = "index.html";
+    signOut(auth).then(() => {
+      localStorage.removeItem("currentUser");
+      window.location.href = "index.html";
+    });
   };
 }
 
@@ -67,11 +56,7 @@ const uploadBtn = document.getElementById("uploadBtn");
 if (uploadBtn) {
   uploadBtn.onclick = () => {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (!currentUser) {
-      alert("Login dulu ya!");
-      window.location.href = "index.html";
-      return;
-    }
+    if (!currentUser) return alert("Login dulu ya!");
 
     const nama = document.getElementById("nama").value.trim();
     const harga = document.getElementById("harga").value.trim();
@@ -92,10 +77,12 @@ if (uploadBtn) {
       wa,
       deskripsi,
       createdAt: Date.now()
-    }).then(() => {
+    })
+    .then(() => {
       alert("Produk berhasil ditambahkan!");
       window.location.href = "dashboard.html";
-    }).catch(err => alert("Gagal upload produk: " + err.message));
+    })
+    .catch(err => alert("Gagal upload produk: " + err.message));
   };
 }
 
