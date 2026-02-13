@@ -1,5 +1,8 @@
-import { db } from "./firebase.js";
-import { ref, push, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+import { db, auth } from "./firebase.js";
+import { ref, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ========================== REGISTER ==========================
 const registerBtn = document.getElementById("registerBtn");
@@ -10,16 +13,12 @@ if (registerBtn) {
 
     if (!email || !password) return alert("Email dan password wajib diisi!");
 
-    // generate user baru di database
-    const newUserRef = push(ref(db, "users/"));
-    set(newUserRef, {
-      email,
-      password, // catatan: plain text, untuk latihan aja
-      createdAt: Date.now()
-    }).then(() => {
-      alert("Registrasi berhasil! Silakan login.");
-      window.location.href = "index.html";
-    }).catch(err => alert("Gagal menyimpan data user: " + err.message));
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        alert("Registrasi berhasil! Silakan login.");
+        window.location.href = "index.html"; // arahkan ke halaman login
+      })
+      .catch(err => alert("Gagal registrasi: " + err.message));
   };
 }
 
@@ -32,27 +31,18 @@ if (loginBtn) {
 
     if (!email || !password) return alert("Email dan password wajib diisi!");
 
-    get(ref(db, "users/")).then(snapshot => {
-      const users = snapshot.val();
-      if (!users) return alert("User tidak ditemukan");
-
-      let loggedInUser = null;
-      Object.keys(users).forEach(key => {
-        if (users[key].email === email && users[key].password === password) {
-          loggedInUser = { uid: key, ...users[key] };
-        }
-      });
-
-      if (loggedInUser) {
-        localStorage.setItem("currentUser", JSON.stringify(loggedInUser));
-        window.location.href = "home.html";
-      } else {
-        alert("Email atau password salah");
-      }
-    });
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // simpan info user ke localStorage
+        localStorage.setItem("currentUser", JSON.stringify({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email
+        }));
+        window.location.href = "home.html"; // arahkan ke home/marketplace
+      })
+      .catch(err => alert("Login gagal: " + err.message));
   };
 }
-
 
 // ========================== LOGOUT ==========================
 const logoutBtn = document.getElementById("logoutBtn");
@@ -64,6 +54,14 @@ if (logoutBtn) {
     });
   };
 }
+
+// ========================== CEK USER LOGIN ==========================
+onAuthStateChanged(auth, (user) => {
+  if (!user && (window.location.pathname.includes("home") || window.location.pathname.includes("dashboard"))) {
+    // jika belum login, redirect ke login
+    window.location.href = "index.html";
+  }
+});
 
 // ========================== ADD PRODUCT ==========================
 const uploadBtn = document.getElementById("uploadBtn");
