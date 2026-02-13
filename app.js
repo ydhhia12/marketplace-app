@@ -4,7 +4,8 @@ import { ref, push, set, onValue, update } from "https://www.gstatic.com/firebas
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// ========================== REGISTER ==========================
+// ========================== REGISTER ==========================//
+
 const registerBtn = document.getElementById("registerBtn");
 if (registerBtn) {
   registerBtn.onclick = () => {
@@ -12,17 +13,21 @@ if (registerBtn) {
     const password = document.getElementById("password").value.trim();
 
     if (!email || !password) return alert("Email dan password wajib diisi!");
+    if (password.length < 6) return alert("Password minimal 6 karakter!");
 
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         alert("Registrasi berhasil! Silakan login.");
-        window.location.href = "index.html"; // arahkan ke halaman login
+        window.location.href = "index.html";
       })
       .catch(err => alert("Gagal registrasi: " + err.message));
   };
 }
 
 // ========================== LOGIN ==========================
+import { auth } from "./firebase.js";
+import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 const loginBtn = document.getElementById("loginBtn");
 if (loginBtn) {
   loginBtn.onclick = () => {
@@ -32,17 +37,18 @@ if (loginBtn) {
     if (!email || !password) return alert("Email dan password wajib diisi!");
 
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // simpan info user ke localStorage
+      .then(userCredential => {
+        // simpan uid & email ke localStorage untuk produk
         localStorage.setItem("currentUser", JSON.stringify({
           uid: userCredential.user.uid,
           email: userCredential.user.email
         }));
-        window.location.href = "home.html"; // arahkan ke home/marketplace
+        window.location.href = "home.html";
       })
       .catch(err => alert("Login gagal: " + err.message));
   };
 }
+
 
 // ========================== LOGOUT ==========================
 const logoutBtn = document.getElementById("logoutBtn");
