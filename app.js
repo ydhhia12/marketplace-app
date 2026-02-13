@@ -243,3 +243,10 @@ if (saveEdit) {
     });
   };
 }
+
+const sellBtn = document.getElementById("sellBtn");
+if (sellBtn) {
+  sellBtn.onclick = () => {
+    window.location.href = "dashboard.html";
+  };
+}
