@@ -53,8 +53,8 @@ const uploadBtn = document.getElementById("uploadBtn");
 const fileInput = document.getElementById("gambarFile");
 const previewImg = document.getElementById("previewImg");
 
-// Preview gambar
 if (fileInput && previewImg) {
+  // Preview gambar
   fileInput.addEventListener("change", () => {
     const file = fileInput.files[0];
     if (file) {
@@ -77,6 +77,12 @@ if (uploadBtn) {
 
     if (!nama || !harga) return alert("Nama dan harga wajib diisi!");
     if (!file) return alert("Silakan pilih foto produk!");
+    
+    // Cek format JPG / JPEG
+    if (!file.name.toLowerCase().endsWith(".jpg") && !file.name.toLowerCase().endsWith(".jpeg")) {
+      return alert("Hanya bisa upload file JPG/JPEG!");
+    }
+
     if (wa && !/^\d+$/.test(wa)) return alert("Nomor WA hanya boleh angka!");
 
     uploadBtn.disabled = true;
@@ -111,6 +117,7 @@ if (uploadBtn) {
     }
   };
 }
+
 
 // ========================== DASHBOARD ==========================
 const dashboardList = document.getElementById("dashboardList");
